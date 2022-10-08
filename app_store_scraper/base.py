@@ -108,7 +108,10 @@ class Base:
     def _get(
         self,
         url,
-        headers=None,
+        headers={
+            "Connection": "keep-alive",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        },
         params=None,
         total=3,
         backoff_factor=3,
@@ -170,9 +173,14 @@ class Base:
 
     def search_id(self):
         search_url = "https://www.google.com/search"
-        self._get(search_url, params={"q": f"app store {self.app_name}"})
+        result = None
         pattern = fr"{self._base_landing_url}/[a-z]{{2}}/.+?/id([0-9]+)"
-        app_id = re.search(pattern, self._response.text).group(1)
+        while result is None:
+            self._get(search_url, params={"q": f"app store {self.app_name}"})
+            result = self._response.text
+            result = re.search(pattern,result )
+            print("try again get appid")
+        app_id = result.group(1)
         return app_id
 
     def review(self, how_many=sys.maxsize, after=None, sleep=None):
